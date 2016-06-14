@@ -154,6 +154,14 @@ namespace Starksoft.Aspen.Ftps
         /// </remarks>
         Tls1Explicit,
         /// <summary>
+        /// Specifies Transport Layer Security (TLS) version 1.1 is required to secure communciations.
+        /// </summary>
+        Tls11Explicit,
+        /// <summary>
+        /// Specifies Transport Layer Security (TLS) version 1.2 is required to secure communciations.
+        /// </summary>
+        Tls12Explicit,
+        /// <summary>
         /// Specifies Transport Layer Security (TLS) version 1.0. or Secure Socket Layer (SSL) version 3.0 is acceptable to secure communications in explicit mode.
         /// </summary>
         /// <remarks>
@@ -162,6 +170,10 @@ namespace Starksoft.Aspen.Ftps
         /// There are slight differences between SSL version 3.0 and TLS version 1.0, but the protocol remains substantially the same.
         /// </remarks>
         Tls1OrSsl3Explicit,
+        /// <summary>
+        /// Specifies Transport Layer Security (TLS) versions 1.0, 1.1 and 1.2 or Secure Socket Layer (SSL) versions 2.0 and 3.0.
+        /// </summary>
+        TlsOrSslExplicit,
         /// <summary>
         /// Specifies Secure Socket Layer (SSL) version 3.0 is required to secure communications in explicit mode.  SSL 3.0 has been superseded by the TLS protocol
         /// and is provided for backward compatibility only
@@ -193,6 +205,14 @@ namespace Starksoft.Aspen.Ftps
         /// </remarks>
         Tls1Implicit,
         /// <summary>
+        /// Specifies Transport Layer Security (TLS) version 1.1 is required to secure communciations.
+        /// </summary>
+        Tls11Implicit,
+        /// <summary>
+        /// Specifies Transport Layer Security (TLS) version 1.2 is required to secure communciations.
+        /// </summary>
+        Tls12Implicit,
+        /// <summary>
         /// Specifies Transport Layer Security (TLS) version 1.0. or Secure Socket Layer (SSL) version 3.0 is acceptable to secure communications in implicit mode.
         /// </summary>
         /// <remarks>
@@ -201,6 +221,10 @@ namespace Starksoft.Aspen.Ftps
         /// There are slight differences between SSL version 3.0 and TLS version 1.0, but the protocol remains substantially the same.
         /// </remarks>
         Tls1OrSsl3Implicit,
+        /// <summary>
+        /// Specifies Transport Layer Security (TLS) versions 1.0, 1.1 and 1.2 or Secure Socket Layer (SSL) versions 2.0 and 3.0.
+        /// </summary>
+        TlsOrSslImplicit,
         /// <summary>
         /// Specifies Secure Socket Layer (SSL) version 3.0 is required to secure communications in implicit mode.  SSL 3.0 has been superseded by the TLS protocol
         /// and is provided for backward compatibility only
@@ -1625,14 +1649,20 @@ namespace Starksoft.Aspen.Ftps
 
             if (_securityProtocol == FtpsSecurityProtocol.Ssl2Explicit 
                 || _securityProtocol == FtpsSecurityProtocol.Ssl3Explicit 
-                || _securityProtocol == FtpsSecurityProtocol.Tls1Explicit 
-                || _securityProtocol == FtpsSecurityProtocol.Tls1OrSsl3Explicit)
+                || _securityProtocol == FtpsSecurityProtocol.Tls1Explicit
+                || _securityProtocol == FtpsSecurityProtocol.Tls11Explicit
+                || _securityProtocol == FtpsSecurityProtocol.Tls12Explicit
+                || _securityProtocol == FtpsSecurityProtocol.Tls1OrSsl3Explicit
+                || _securityProtocol == FtpsSecurityProtocol.TlsOrSslExplicit)
                 CreateSslExplicitCommandStream();
 
             if (_securityProtocol == FtpsSecurityProtocol.Ssl2Implicit 
                 || _securityProtocol == FtpsSecurityProtocol.Ssl3Implicit 
-                || _securityProtocol == FtpsSecurityProtocol.Tls1Implicit 
-                || _securityProtocol == FtpsSecurityProtocol.Tls1OrSsl3Implicit)
+                || _securityProtocol == FtpsSecurityProtocol.Tls1Implicit
+                || _securityProtocol == FtpsSecurityProtocol.Tls11Implicit
+                || _securityProtocol == FtpsSecurityProtocol.Tls12Implicit
+                || _securityProtocol == FtpsSecurityProtocol.Tls1OrSsl3Implicit
+                || _securityProtocol == FtpsSecurityProtocol.TlsOrSslImplicit)
                 CreateSslImplicitCommandStream();
 
             // test to see if this is an asychronous operation and if so make sure 
@@ -2576,6 +2606,10 @@ namespace Starksoft.Aspen.Ftps
             SslProtocols protocol = SslProtocols.None;
             switch (_securityProtocol)
             {
+                case FtpsSecurityProtocol.TlsOrSslExplicit:
+                case FtpsSecurityProtocol.TlsOrSslImplicit:
+                    protocol = SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
+                    break;
                 case FtpsSecurityProtocol.Tls1OrSsl3Explicit:
                 case FtpsSecurityProtocol.Tls1OrSsl3Implicit:
                     protocol = SslProtocols.Default;
@@ -2591,6 +2625,14 @@ namespace Starksoft.Aspen.Ftps
                 case FtpsSecurityProtocol.Tls1Explicit:
                 case FtpsSecurityProtocol.Tls1Implicit:
                     protocol = SslProtocols.Tls;
+                    break;
+                case FtpsSecurityProtocol.Tls11Explicit:
+                case FtpsSecurityProtocol.Tls11Implicit:
+                    protocol = SslProtocols.Tls11;
+                    break;
+                case FtpsSecurityProtocol.Tls12Explicit:
+                case FtpsSecurityProtocol.Tls12Implicit:
+                    protocol = SslProtocols.Tls12;
                     break;
                 default:
                     throw new FtpsSecureConnectionException(String.Format("unexpected FtpSecurityProtocol type '{0}'", _securityProtocol.ToString()));
@@ -2664,7 +2706,10 @@ namespace Starksoft.Aspen.Ftps
                     case FtpsSecurityProtocol.Ssl2Explicit:
                         authCommand = "SSL";
                         break;
+                    case FtpsSecurityProtocol.TlsOrSslExplicit:
                     case FtpsSecurityProtocol.Tls1Explicit:
+                    case FtpsSecurityProtocol.Tls11Explicit:
+                    case FtpsSecurityProtocol.Tls12Explicit:
                         authCommand = "TLS";
                         break;
                 }
